@@ -1,0 +1,108 @@
+设置树莓派开机自启的方法
+首先写个你得有个需要运行的python脚本
+我这里是几个自己的程序（注意的的py程序也需要chmod进行777权限操作，不然会运行失败）
+文件保存在/home/pi/share/ip_acquire.py
+
+一 首先给你的py文件增加权限
+chmod 777  /home/pi/share/ip_acquire.py
+二 开机启动脚本
+保存脚本为/etc/init.d/my_start文件
+
+#!/bin/bash
+case "$1" in
+    start):
+        echo "Starting app"
+        nohup python3 /home/pi/share/ip_acquire.py & 
+    ;;
+    stop):
+        echo "to"
+        #kill $( ps aux | grep -m 1 'python3 /home/pi/share/ip_acquire.py' | awk '{ print $2 }') ;; *)
+        echo "Usage: service start_tool start|stop"
+        exit 1 ;;
+esac
+ 
+exit 0
+三 设置python脚本开机启动
+sudo chmod 777 /etc/init.d/my_start
+这样启动改脚本用service 命令就可以，在使用该指令前，你需要重启一下系统，不然会提示没有该服务
+
+sudo service my_start start#启动
+sudo service my_start stop#停止
+最后设置开机启动就好了
+
+sudo update-rc.d my_start defaults
+这样就完工了,重启树莓派就会程序自动跑起来了，停止用
+
+sudo service my_start stop就行
+
+在这里需要注意：
+因为这个开机自启是在机器还没完成初始化进程的时候就启动的，所以在你的python程序的开头最好加入一个time.sleep函数休眠20秒，强迫程序在系统初始化成功后进行运行。不然可能会因为系统还没准备好你的程序就强行运行而导致启动失败。
+
+
+
+
+这篇文章主要介绍了Linux下Python脚本自启动和定时启动的详细步骤，本文给大家介绍的非常详细，具有一定的参考借鉴价值,需要的朋友可以参考下
+一、Python开机自动运行
+
+假如Python自启动脚本为 auto.py 。那么用root权限编辑以下文件：
+
+sudo vim /etc/rc.local
+1
+如果没有 rc.local 请看 这篇文章
+在exit 0上面编辑启动脚本的命令
+
+/usr/bin/python3 /home/selfcs/auto.py > /home/selfcs/auto.log
+
+
+最后重启Linux,脚本就能自动运行并打印日志了。
+
+二、让Python脚本定时启动
+
+用root权限编辑以下文件
+
+sudo vim /etc/crontab
+1
+
+在文件末尾添加以下命令
+
+2 * * * * root /usr/bin/python3 /home/selfcs/auto.py > /home/selfcs/auto.log
+1
+以上代码的意思是每隔两分钟执行一次脚本并打印日志。
+
+三、crontab编写解释
+
+基本格式
+
+*  *  *  *  *  user  command
+分 时 日 月 周  用户  命令
+1
+2
+3.1 举例说明 1、每分钟执行一次
+
+* * * * * user command
+1
+2、每隔2小时执行一次
+
+* */2 * * * user command (/表示频率)
+1
+3、每天8:30分执行一次
+
+30 8 * * * user command
+1
+4、每小时的30和50分各执行一次
+
+30,50 * * * * user command（,表示并列）
+1
+5、每个月的3号到6号的8:30执行一次
+
+30 8 3-6 * * user command （-表示范围）
+1
+6、每个星期一的8:30执行一次
+
+30 8 * * 1 user command （周的范围为0-7,0和7代表周日）
+————————————————
+版权声明：本文为CSDN博主「程序员学府」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。
+原文链接：https://blog.csdn.net/chengxun02/article/details/105187996
+————————————————
+版权声明：本文为CSDN博主「程序员学府」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。
+原文链接：https://blog.csdn.net/chengxun02/article/details/105187996
