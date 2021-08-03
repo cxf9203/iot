@@ -10,11 +10,11 @@ import hmac,hashlib
 import wget
 import os
 import zipfile
+from  subprocess import Popen
 
 
 #setting
-ver=[]
-#version = "1.0"
+time.sleep(5)
 id = 9900001
 
 # =====初始化======
@@ -93,11 +93,13 @@ def otaversion(paraversion):
 def on_message(client, userdata, msg):
     print(msg.payload)
     Msg = json.loads(msg.payload.decode('utf-8'))
+    print("MSG = " , Msg)
     #check ota version check url to download newversion
     if ('url' in Msg["data"].keys()):
         newversion = str(Msg['data']['version'])
         version = newversion
         print('newversion = ', newversion)
+        #注意：这里小瑕疵，需要修改下，免得新版本的时候再次现在url
         print("low version, request update")
         url = str(Msg['data']['url'])
         print('url address = ', url)
@@ -117,14 +119,11 @@ def on_message(client, userdata, msg):
                 file.close()
             #中断旧python脚本，需在这里完成工作，实现旧文件删除，执行下载的新文件。
             #Todo
-            #print(os.popen('tasklist'))
-            #syscmd = ('')
-            #closeresult = os.system(syscmd)
-            #print("systemcloseresult",closeresult)
+            presult.kill()
 
 
             # 执行下载的.py文件#####
-            pythonfile = ('python wanzheng.py')  #
+            pythonfile = ('python run.py')  #
             exrresult = os.system(pythonfile)
             print(exrresult)
             # 下载完成后推送进度
@@ -137,6 +136,10 @@ def on_message(client, userdata, msg):
             print("failure")
     else:
         print("already new version") #一般不会执行到这里
+
+    #if (' ' in Msg["data"].keys()):    #拥有读写功能的标识符
+
+
     return version
 
 
@@ -175,7 +178,7 @@ Server, ClientId, userNmae, Password = linkiot(DeviceName, ProductKey, DeviceSec
 # mqtt链接
 mqtt = MQTT(Server, ClientId, userNmae, Password)
 mqtt.subscribe(SET)  # 订阅服务器下发消息topic
-mqtt.subscribe(OTARECEIVE)
+mqtt.subscribe(OTARECEIVE) #MQTT 消息订阅OTA
 mqtt.begin(on_message, on_connect)
 
 
@@ -194,9 +197,9 @@ JsonProgressMsn = json.dumps(JsonProgressMsn) #param OTA
 
 #ruian_field_temp = float(30.1)
 # 信息获取上报，每10秒钟上报一次系统参数
-pythonfile = ('python wanzheng.py')  #
-exrresult = os.system(pythonfile)
-print(exrresult)
+presult=Popen("python .\\run.py")
+print("execuate success",presult)
+
 while True:
     time.sleep(10)
 
@@ -237,10 +240,8 @@ while True:
         # 'DISK_used_percentage':DISK_perc,
         # 'PowerLed':power_LED
        # 'guanghe': ruian_field_temp
-
     }
     JsonUpdataMsn = Alink(updateMsn)
     print(JsonUpdataMsn)
-
     mqtt.push(POST, JsonUpdataMsn)  # 定时向阿里云IOT推送我们构建好的Alink协议数据
     """
